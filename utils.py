@@ -1,5 +1,6 @@
 from scipy.spatial import distance_matrix
 import numpy as np
+from sklearn.model_selection import train_test_split
 import torch
 
 DEVICE = "cuda" if torch.cuda.is_available() else  "cpu"
@@ -28,7 +29,13 @@ def evaluate_gap(y_pred,y_true,x):
         l_true = length(y_true,dm)
         return gap(l_pred,l_true)
 
+def split_train_test(X,y,split):
+    """Split the dataset into trainset and testset, with each instances linked to its groundtruth solution"""
 
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=split, random_state=42)
+    train_dataset = list(zip(X_train,y_train))
+    test_dataset = list(zip(X_test,y_test))
+    return train_dataset,test_dataset
 def collate_batch_ptr(batch):
     points_list, target_list = [], []
 

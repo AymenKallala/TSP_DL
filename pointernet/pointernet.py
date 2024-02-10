@@ -99,7 +99,7 @@ class Attention(nn.Module):
         self.V = Parameter(torch.FloatTensor(hidden_dim), requires_grad=True)
         self._inf = Parameter(torch.FloatTensor([float('-inf')]), requires_grad=False)
         self.tanh = nn.Tanh()
-        self.softmax = nn.Softmax()
+        self.softmax = nn.Softmax(-1)
 
         # Initialize vector V
         nn.init.uniform(self.V, -1, 1)
@@ -243,7 +243,7 @@ class Decoder(nn.Module):
 
             # Get embedded inputs by max indices
             embedding_mask = one_hot_pointers.unsqueeze(2).expand(-1, -1, self.embedding_dim).byte()
-            decoder_input = embedded_inputs[embedding_mask.data].view(batch_size, self.embedding_dim)
+            decoder_input = embedded_inputs[embedding_mask.data.bool()].view(batch_size, self.embedding_dim)
 
             outputs.append(outs.unsqueeze(0))
             pointers.append(indices.unsqueeze(1))
