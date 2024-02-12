@@ -162,8 +162,8 @@ def myMHA(Q, K, V, nb_heads, mask=None, clip_value=None):
         attn_weights = attn_weights.masked_fill(
             mask.unsqueeze(1), float("-1e9")
         )  # size(attn_weights)=(bsz*nb_heads, 1, nb_nodes+1)
-    attn_weights = torch.softmax(
-        attn_weights, dim=-1
+    attn_weights = torch.nn.LogSoftmax(dim=-1)(
+        attn_weights
     )  # size(attn_weights)=(bsz*nb_heads, 1, nb_nodes+1)
     attn_output = torch.bmm(
         attn_weights, V
@@ -374,7 +374,7 @@ class TSP_net(nn.Module):
         self.WV_att_decoder = nn.Linear(dim_emb, nb_layers_decoder * dim_emb)
         self.PE = generate_positional_encoding(dim_emb, max_len_PE)
 
-    def forward(self, x,starting_mask = None):
+    def forward(self, x, starting_mask=None):
 
         # some parameters
         bsz = x.shape[0]
@@ -416,14 +416,14 @@ class TSP_net(nn.Module):
         )  # size(h_start)=(bsz, dim_emb)
 
         # initialize mask of visited cities
-        if starting_mask ==None:
+        if starting_mask == None:
             mask_visited_nodes = torch.zeros(
-            bsz, nb_nodes + 1, device=x.device
+                bsz, nb_nodes + 1, device=x.device
             ).bool()  # False
-            #mask_visited_nodes[zero_to_bsz, idx_start_placeholder] = True
+            # mask_visited_nodes[zero_to_bsz, idx_start_placeholder] = True
         else:
-                mask_visited_nodes = starting_mask.to(x.device)
-                mask_visited_nodes[zero_to_bsz, idx_start_placeholder] = True
+            mask_visited_nodes = starting_mask.to(x.device)
+            mask_visited_nodes[zero_to_bsz, idx_start_placeholder] = True
 
         # clear key and val stored in the decoder
         self.decoder.reset_selfatt_keys_values()
@@ -442,14 +442,11 @@ class TSP_net(nn.Module):
 
             masked_routes = check_finished_routes(mask_visited_nodes).squeeze(-1)
 
-            probs_fill = torch.zeros((nb_nodes+1)).to(x.device)
+            probs_fill = torch.zeros((nb_nodes + 1)).to(x.device)
             probs_fill[nb_nodes] = 1.0
 
-            idx = idx.masked_fill(masked_routes,nb_nodes)
-            #prob_next_node[masked_routes] = probs_fill
-
-
-            
+            idx = idx.masked_fill(masked_routes, nb_nodes)
+            # prob_next_node[masked_routes] = probs_fill
 
             # compute logprobs of the action items in the list sumLogProbOfActions
             ProbOfChoices = prob_next_node[zero_to_bsz, idx]
@@ -463,7 +460,6 @@ class TSP_net(nn.Module):
             tours.append(idx)
             probs_next_city.append(prob_next_node)
 
-
             # update masks with visited nodes
             mask_visited_nodes = mask_visited_nodes.clone()
             mask_visited_nodes[zero_to_bsz, idx] = True
@@ -475,6 +471,8 @@ class TSP_net(nn.Module):
 
         # convert the list of nodes into a tensor of shape (bsz,num_cities)
         tours = torch.stack(tours, dim=1)  # size(col_index)=(bsz, nb_nodes)
-        probs_next_city = torch.stack(probs_next_city,dim = 1) # size(col_index)=(bsz, nb_nodes,nb_nodes)
+        probs_next_city = torch.stack(
+            probs_next_city, dim=1
+        )  # size(col_index)=(bsz, nb_nodes,nb_nodes)
 
-        return tours,probs_next_city, sumLogProbOfActions
+        return tours, probs_next_city, sumLogProbOfActions

@@ -45,11 +45,12 @@ def split_train_test(X, y, split):
     test_dataset = list(zip(X_test, y_test))
     return train_dataset, test_dataset
 
+
 def check_finished_routes(tensor):
     new = []
     for row in tensor:
         new.append(torch.tensor([False in row]))
-    
+
     return ~torch.stack(new).to(tensor.device)
 
 
@@ -113,20 +114,26 @@ def collate_batch_gcn(batch):
         torch.LongTensor(y_edges).to(DEVICE),
         torch.LongTensor(y_nodes).to(DEVICE),
     )
-def collate_batch_ptr(batch):
-    points_list, target_list,dm = [], [],[]
 
-    for x,y in batch:
-        dm_x = np.append(x,np.array([[-1,-1]]),axis = 0)
-         
+
+def collate_batch_transformernet(batch):
+    points_list, target_list, dm = [], [], []
+
+    for x, y in batch:
+        dm_x = np.append(x, np.array([[-1, -1]]), axis=0)
+
         points_list.append(x)
         target_list.append(y)
         dm.append(distance_matrix(dm_x, dm_x))
 
     x = torch.tensor(np.array(points_list)).to(DEVICE)
-    y= torch.tensor(np.array(target_list))
-    starting_mask= (y==-1)
-    added_node = torch.zeros(len(x),1).bool()
+    y = torch.tensor(np.array(target_list))
+    starting_mask = y == -1
+    added_node = torch.zeros(len(x), 1).bool()
 
-    
-    return x,y.to(DEVICE),torch.cat([starting_mask,added_node],1).to(x.device),torch.FloatTensor(dm).to(x.device)
+    return (
+        x,
+        y.to(DEVICE),
+        torch.cat([starting_mask, added_node], 1).to(x.device),
+        torch.FloatTensor(dm).to(x.device),
+    )

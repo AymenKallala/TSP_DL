@@ -65,7 +65,7 @@ class ResidualGatedGCNModel(nn.Module):
         # self.mlp_nodes = MLP(self.hidden_dim, self.voc_nodes_out, self.mlp_layers)
 
     def forward(
-        self, x_edges, x_edges_values,x_nodes, x_nodes_coord, y_edges, edge_cw
+        self, x_edges, x_edges_values, x_nodes, x_nodes_coord, y_edges, edge_cw
     ):
         """
         Args:
