@@ -1,20 +1,36 @@
+from multiprocessing import get_context
+
+import torch
 from python_tsp.heuristics import solve_tsp_local_search
-from scipy.spatial import distance_matrix
+from tqdm import tqdm
+
+from graphconvnet.model.graph_utils import total_tour_len_nodes
+from utils import gap
 
 
+def local_search_predict(dm):
 
-def local_search_predict(x):
+    return solve_tsp_local_search(dm)[0]
 
-    dm = distance_matrix(x,x)
-    return (solve_tsp_local_search(dm)[0])
 
-class LocalSearch():
+def test_local_search(dataloader):
+    """Runs local search on a data loader in a parallelized fashion (with multiprocessing)
 
-    def __init__(self,x):
+    Args:
+        dataloader (torch.dataloader): the dataset
+    """
+    total_gaps = 0
+    total = 0
 
-        self.x = x
-        self.distance_matrix = distance_matrix(x,x)
-    
-    def predict(self):
+    for _, y, dm in tqdm(dataloader, total=len(dataloader)):
+        total += len(y)
 
-        return(solve_tsp_local_search(self.distance_matrix)[0])
+        with get_context("spawn").Pool() as pool:
+            preds = pool.map(local_search_predict, dm)
+
+        total_pred_len = total_tour_len_nodes(dm, torch.Tensor(preds).int())
+        total_gt_len = total_tour_len_nodes(dm, y)
+
+        total_gaps += gap(total_pred_len, total_gt_len)
+
+    print(f"AVERAGE GAP FOR LOCAL SEARCH SOLVER: {total_gaps/total}")
