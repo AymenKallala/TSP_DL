@@ -44,8 +44,19 @@ def is_valid_tour(nodes, num_nodes):
     """Sanity check: tour visits all nodes given."""
     return sorted(nodes) == [i for i in range(num_nodes)]
 
+def gap(pred_length, optim_length):
+    """ return the gap between a predicted tour length and the groundtruth tour length.
 
-def total_tour_len_nodes(distance_matrix, bs_nodes):
+    Args:
+        pred_length (float): predicted tour length
+        optim_length (float): optimal tour length
+
+    Returns:
+        float: the gap computed
+    """
+    return 100 * (pred_length - optim_length) / optim_length
+
+def total_gap(distance_matrix, bs_nodes,gt_nodes):
     """
     Computes total tour length for given batch prediction as node ordering after beamsearch (for Pytorch tensors).
 
@@ -57,13 +68,23 @@ def total_tour_len_nodes(distance_matrix, bs_nodes):
         mean_tour_len: Mean tour length over batch
     """
     y = bs_nodes.cpu().numpy()
+    gt_nodes = gt_nodes.cpu().numpy()
     W_val = distance_matrix.cpu().numpy()
 
-    running_tour_len = 0
+    running_gap = 0
     for batch_idx in range(y.shape[0]):
+        pred_tour = 0
+        gt_tour = 0
         for y_idx in range(y[batch_idx].shape[0] - 1):
             i = y[batch_idx][y_idx]
             j = y[batch_idx][y_idx + 1]
-            running_tour_len += W_val[batch_idx][i][j]
-        running_tour_len += W_val[batch_idx][j][0]  # Add final connection to tour/cycle
-    return running_tour_len
+            h = gt_nodes[batch_idx][y_idx]
+            k = gt_nodes[batch_idx][y_idx+1]
+            pred_tour += W_val[batch_idx][i][j]
+            gt_tour += W_val[batch_idx][h][k]
+        pred_tour += W_val[batch_idx][j][0]
+        gt_tour += W_val[batch_idx][k][0] # Add final connection to tour/cycle
+
+        running_gap+= gap(pred_tour,gt_tour)
+
+    return running_gap

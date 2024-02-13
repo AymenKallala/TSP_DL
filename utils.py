@@ -14,7 +14,7 @@ def unpad(array):
 
 
 def gap(pred_length, optim_length):
-    """_summary_
+    """ return the gap between a predicted tour length and the groundtruth tour length.
 
     Args:
         pred_length (float): predicted tour length

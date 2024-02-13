@@ -84,8 +84,7 @@ def test_gcn(dataloader, net, epoch, dtypeFloat, dtypeLong):
     # Initialize running data
     running_loss = 0.0
     running_nb_data = 0.0
-    running_tour_length = 0.0
-    running_gt_length = 0.0
+    running_gap = 0.0
 
     total_gaps = 0
     total_count = 0
@@ -109,36 +108,31 @@ def test_gcn(dataloader, net, epoch, dtypeFloat, dtypeLong):
             loss = loss.mean()
 
             # Beamsearch decoding
+            gap = total_gap(x_edges_values, bs_seq,y_nodes)
 
-            pred_tour_len = total_tour_len_nodes(x_edges_values, bs_seq)
-            gt_tour_len = total_tour_len_nodes(x_edges_values, y_nodes)
+            running_gap+= gap
+            total_gap+= gap
 
             # Update running data
             running_nb_data += len(batch)
             running_loss += len(batch) * loss.item()  # Re-scale loss
-            running_tour_length += pred_tour_len
-            running_gt_length += gt_tour_len
 
             if idx % log_interval == 0 and idx > 0:
-                gap = (
-                    100 * (running_tour_length - running_gt_length) / running_gt_length
-                )
-
+                
                 total_gaps += gap
-                total_count += 1
+                total_count += running_nb_data
 
                 print(
                     "| epoch {:3d} | {:5d}/{:5d} batches".format(
                         epoch, idx, len(dataloader)
                     ),
-                    f"| loss {running_loss/running_nb_data}" f"| gap {gap}",
+                    f"| loss {running_loss/running_nb_data}" f"| gap {running_gap/running_nb_data}",
                 )
                 (
                     running_loss,
                     running_nb_data,
-                    running_tour_length,
-                    running_gt_length,
-                ) = (0, 0, 0, 0)
+                    running_gap
+                ) = (0, 0, 0)
 
         print("-" * 50, f"AVERAGE GAP : {total_gaps/total_count}", "-" * 50)
 

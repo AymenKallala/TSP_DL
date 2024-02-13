@@ -442,11 +442,8 @@ class TSP_net(nn.Module):
 
             masked_routes = check_finished_routes(mask_visited_nodes).squeeze(-1)
 
-            probs_fill = torch.zeros((nb_nodes + 1)).to(x.device)
-            probs_fill[nb_nodes] = 1.0
-
             idx = idx.masked_fill(masked_routes, nb_nodes)
-            # prob_next_node[masked_routes] = probs_fill
+            
 
             # compute logprobs of the action items in the list sumLogProbOfActions
             ProbOfChoices = prob_next_node[zero_to_bsz, idx]

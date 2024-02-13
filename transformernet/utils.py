@@ -1,22 +1,19 @@
 import torch
 from tqdm import tqdm
 
-from graphconvnet.model.graph_utils import total_tour_len_nodes
+from graphconvnet.model.graph_utils import total_gap
 
 
 def train_transformernet(dataloader, model, optimizer, criterion, epoch):
     model.train()
-    total_loss, total_count = (
-        0,
-        0,
-    )
+    total_loss = 0
     log_interval = 100
-    running_tour_length = 0
-    running_gt_length = 0
+    running_gap = 0
+    running_nb_data = 0
 
     for idx, (x, y, mask, dm) in tqdm(enumerate(dataloader)):
         optimizer.zero_grad()
-        total_count += y.shape[0]
+        running_nb_data+= y.shape[0]
 
         y_pred, probs, _ = model(x, mask)
         probs = probs.permute(0, 2, 1)
@@ -32,17 +29,16 @@ def train_transformernet(dataloader, model, optimizer, criterion, epoch):
         optimizer.step()
 
         # Compute the tour lengths
-        running_tour_length += total_tour_len_nodes(dm, y_pred)
-        running_gt_length += total_tour_len_nodes(dm, y)
+        running_gap += total_gap(dm, y_pred,y)
 
         if idx % log_interval == 0 and idx > 0:
-            gap = 100 * (running_tour_length - running_gt_length) / running_gt_length
+            gap = running_gap/running_nb_data
             print(
                 "| epoch {:3d} | {:5d}/{:5d} batches"
                 "| gap {:8.3f}".format(epoch, idx, len(dataloader), gap),
-                f"| loss {total_loss/total_count}",
+                f"| loss {total_loss/running_nb_data}",
             )
-            running_tour_length, running_gt_length, total_count, total_loss = 0, 0, 0, 0
+            running_gap, running_nb_data, total_loss = 0, 0, 0
 
 
 def test_transformernet(dataloader, net, criterion, epoch):
@@ -63,8 +59,7 @@ def test_transformernet(dataloader, net, criterion, epoch):
     # Initialize running data
     running_loss = 0.0
     running_nb_data = 0.0
-    running_tour_length = 0.0
-    running_gt_length = 0.0
+    running_gap = 0
 
     total_gaps = 0
     total_count = 0
@@ -81,20 +76,18 @@ def test_transformernet(dataloader, net, criterion, epoch):
             running_loss += loss.item()
 
             # Compute the tour lengths
-            running_tour_length += total_tour_len_nodes(dm, y_pred)
-            running_gt_length += total_tour_len_nodes(dm, y)
+            gap =  total_gap(dm, y_pred,y)
+            running_gap += gap
 
             # Update running data
             running_nb_data += len(x)
             running_loss += loss.item()  # Re-scale loss
 
             if idx % log_interval == 0 and idx > 0:
-                gap = (
-                    100 * (running_tour_length - running_gt_length) / running_gt_length
-                )
+                gap = running_gap/running_nb_data
 
                 total_gaps += gap
-                total_count += 1
+                total_count += running_nb_data
 
                 print(
                     "| epoch {:3d} | {:5d}/{:5d} batches".format(
@@ -105,8 +98,6 @@ def test_transformernet(dataloader, net, criterion, epoch):
                 (
                     running_loss,
                     running_nb_data,
-                    running_tour_length,
-                    running_gt_length,
-                ) = (0, 0, 0, 0)
+                ) = (0, 0)
 
         print("-" * 50, f"AVERAGE GAP : {total_gaps/total_count}", "-" * 50)
