@@ -27,7 +27,7 @@ class Beamsearch(object):
             num_nodes: Number of nodes in TSP tours
             dtypeFloat: Float data type (for GPU/CPU compatibility)
             dtypeLong: Long data type (for GPU/CPU compatibility)
-            probs_type: Type of probability values being handled by beamsearch (either 'raw'/'logits'/'argmax'(TODO))
+            probs_type: Type of probability values being handled by beamsearch (either 'raw'/'logits'/'argmax')
             random_start: Flag for using fixed (at node 0) vs. random starting points for beamsearch
         """
         # Beamsearch parameters

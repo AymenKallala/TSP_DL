@@ -2,6 +2,7 @@ import numpy as np
 import torch
 from scipy.spatial import distance_matrix
 from sklearn.model_selection import train_test_split
+import matplotlib.pyplot as plt
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -47,6 +48,14 @@ def split_train_test(X, y, split):
 
 
 def check_finished_routes(tensor):
+    """helper function to continue completing the right routes in the transformernet when decoding a batch.
+
+    Args:
+        tensor (batch_mask): Represent a Mask representing all the cities in a batch. Shape (Batch_size, Num Nodes)
+
+    Returns:
+        A boolean mask that represent all the routes that have already been done (all the relevant points were visited) (Batch_size,)
+    """    
     new = []
     for row in tensor:
         new.append(torch.tensor([False in row]))
@@ -137,3 +146,90 @@ def collate_batch_transformernet(batch):
         torch.cat([starting_mask, added_node], 1).to(x.device),
         torch.FloatTensor(dm).to(x.device),
     )
+
+def plot_route(points, route):
+    """Function to visualize a prediction
+
+    Args:
+        points (list,tensor or numpy array): containing all the 2D instances.
+        route (list,tensor or numpy array): sequence of ordered indices representing the route
+    """    
+    # Extract x and y coordinates from the points
+    x = [point[0] for point in points]
+    y = [point[1] for point in points]
+
+    # Create a new figure
+    plt.figure()
+
+    # Plot the points
+    plt.plot(x, y, 'o', markersize=10)
+
+    # Plot the route
+    for i in range(len(route) - 1):
+        # Get the current point
+        current_point = points[route[i]]
+        # Get the next point
+        next_point = points[route[i + 1]]
+        # Plot a line between the current point and the next point
+        plt.plot([current_point[0], next_point[0]], [current_point[1], next_point[1]], 'k-')
+
+    # Plot a line connecting the last and the first points to complete the loop
+    plt.plot([points[route[-1]][0], points[route[0]][0]], [points[route[-1]][1], points[route[0]][1]], 'k-')
+
+    # Set plot title
+    plt.title('TSP Route')
+
+    # Display the plot
+    plt.show()
+
+
+def plot_routes_s2s(points, predicted_routes, ground_truth_routes):
+    """ Compares two proposition for the same instance: a groundtruth and a predicted.
+
+    Args:
+        points (list,tensor or numpy array): containing all the 2D instances.
+        predicted_route (list,tensor or numpy array): sequence of ordered indices representing the predicted route
+        ground_truth_route (list,tensor or numpy array): sequence of ordered indices representing the groundtruth route
+    """    
+
+    num_routes = predicted_routes.shape[0]
+
+
+
+    # Create a new figure
+    plt.figure(figsize=(15, 5 * num_routes))
+
+    # Plot the predicted route on the left
+    for i in range(num_routes):
+        predicted_route = predicted_routes[i]
+        ground_truth_route = ground_truth_routes[i]
+        # Extract x and y coordinates from the points
+        x = [point[0] for point in points[i]]
+        y = [point[1] for point in points[i]]
+
+
+        plt.subplot(num_routes,2, 2*i + 1)
+        plt.plot(x, y, 'o', markersize=10)
+        plt.title('Predicted Route')
+        for j in range(len(predicted_route) - 1):
+            current_point = points[i][predicted_route[j]]
+            next_point = points[i][predicted_route[j + 1]]
+            plt.plot([current_point[0], next_point[0]], [current_point[1], next_point[1]], 'r--')
+        plt.plot([points[i][predicted_route[-1]][0], points[i][predicted_route[0]][0]], [points[i][predicted_route[-1]][1], points[i][predicted_route[0]][1]], 'r--')
+
+        # Plot the ground truth route on the right
+        plt.subplot(num_routes, 2, 2*i+2)
+        plt.plot(x, y, 'o', markersize=10)
+        plt.title('Groundtruth Route')
+        for j in range(len(ground_truth_route) - 1):
+            current_point = points[i][ground_truth_route[j]]
+            next_point = points[i][ground_truth_route[j + 1]]
+            plt.plot([current_point[0], next_point[0]], [current_point[1], next_point[1]], 'g-')
+        plt.plot([points[i][ground_truth_route[-1]][0], points[i][ground_truth_route[0]][0]], [points[i][ground_truth_route[-1]][1], points[i][ground_truth_route[0]][1]], 'g-')
+
+    # Set plot title and legend
+    plt.suptitle('TSP Routes Comparison')
+    plt.legend()
+
+    # Display the plot
+    plt.show()

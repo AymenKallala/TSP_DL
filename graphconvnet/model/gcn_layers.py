@@ -141,7 +141,7 @@ class ResidualGatedGCNLayer(nn.Module):
         # Edge convolution
         e_tmp = self.edge_feat(x_in, e_in)  # B x V x V x H
         # Compute edge gates
-        edge_gate = F.sigmoid(e_tmp)
+        edge_gate = torch.sigmoid(e_tmp)
         # Node convolution
         x_tmp = self.node_feat(x_in, edge_gate)
         # Batch normalization

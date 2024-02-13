@@ -2,21 +2,29 @@ absl-py==2.1.0
 certifi==2024.2.2
 charset-normalizer==3.3.2
 click==8.1.7
+contourpy==1.1.1
+cycler==0.12.1
 Cython==3.0.8
 Deprecated==1.2.14
 filelock==3.13.1
+fonttools==4.48.1
 fsspec==2024.2.0
 idna==3.6
+importlib-resources==6.1.1
 Jinja2==3.1.3
 joblib==1.3.2
+kiwisolver==1.4.5
 MarkupSafe==2.1.5
+matplotlib==3.7.4
 mpmath==1.3.0
 networkx==2.8.8
 numpy==1.24.4
 ortools==9.8.3296
 pandas==2.0.3
+pillow==10.2.0
 protobuf==4.25.2
 pyconcorde @ git+https://github.com/jvkersch/pyconcorde@8a6b193b79ebdf8f07e0b0635722b3b4edbc1560
+pyparsing==3.1.1
 python-tsp==0.4.0
 pytz==2024.1
 requests==2.31.0
@@ -31,3 +39,4 @@ tsplib95==0.7.1
 tzdata==2023.4
 urllib3==2.2.0
 wrapt==1.16.0
+zipp==3.17.0

@@ -16,7 +16,7 @@ def concorde_solve(x):
 
 
 def test_concorde(dataloader):
-    """Runs local search on a data loader in a parallelized fashion (with multiprocessing)
+    """Runs concorde algorithm on a data loader in a parallelized fashion (with multiprocessing)
 
     Args:
         dataloader (torch.dataloader): the dataset

@@ -111,7 +111,6 @@ def test_gcn(dataloader, net, epoch, dtypeFloat, dtypeLong):
             gap = total_gap(x_edges_values, bs_seq,y_nodes)
 
             running_gap+= gap
-            total_gap+= gap
 
             # Update running data
             running_nb_data += len(batch)
@@ -119,7 +118,7 @@ def test_gcn(dataloader, net, epoch, dtypeFloat, dtypeLong):
 
             if idx % log_interval == 0 and idx > 0:
                 
-                total_gaps += gap
+                total_gaps += running_gap
                 total_count += running_nb_data
 
                 print(
